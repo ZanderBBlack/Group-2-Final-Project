@@ -8,13 +8,35 @@ menu = [
     "7. Save & Exit",
 ]
 
+income_entries = {}
+expense_entries = {}
+
+def add_income():
+    income = input("Enter Income Source:")
+    
+    if income in income_entries:
+        print("Income source already exists.")
+        return
+    amount = float(input("Enter Amount:"))
+    income_entries[income] = amount
+    print("Income added successfully.")
+    
+def add_expense():
+    expense = input("Enter Expense Source:")
+    
+    if expense in expense_entries:
+        print("Expense source already exists.")
+        return
+    amount = float(input("Enter Amount:"))
+    expense_entries[expense] = amount
+    print("Expense added successfully.")
+    
+    
 while True:
-    # prints all options in option list
     print ("\n--------- Personal Budget Tracker ----------")
     for option in menu:
         print(option)
 
-    # user inputs choice of option
     choice = input("Choose an option (1-7):")
 
     if choice == "1":
@@ -35,11 +57,9 @@ while True:
     elif choice == "6":
         generate_report()
 
-    # exits program (infinite loop)
     elif choice == "7":
         print("Saving and exiting program.")
         break
 
-    # if choice something else its invalid
     else:
         print("Invalid option.")
