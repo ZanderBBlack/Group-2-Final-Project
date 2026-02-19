@@ -1,45 +1,46 @@
-menu = [
-    "1. Add Income",
-    "2. Add Expense",
-    "3. View All Transactions",
-    "4. Set Budget",
-    "5. View Budget Summary",
-    "6. Generate Report",
-    "7. Save & Exit",
-]
+class Main:
 
-while True:
-    # prints all options in option list
-    print ("\n--------- Personal Budget Tracker ----------")
-    for option in menu:
-        print(option)
+    @staticmethod
+    def Menu():
+        print("""
+        [1] Add Income
+        [2] Add Expense
+        [3] View All Transactions
+        [4] Set Budget
+        [5] View Budget Summary
+        [6] Generate Report
+        [exit] Save And Exit
+        """)
 
-    # user inputs choice of option
-    choice = input("Choose an option (1-7):")
+    @staticmethod
+    def HandleInput():
+        selection = input("> ")
 
-    if choice == "1":
-        add_income()
-    
-    elif choice == "2":
-        add_expense()
-    
-    elif choice == "3":
-        view_transactions()
+        match selection:
+            case "1":
+                return "Add Income Selected"
+            
+            case "2":
+                return "Add Expense Selected"
+            
+            case "3":
+                return "View All Transactions Selected"
+            
+            case "4":
+                return "Set Budget Selected"
+            
+            case "5":
+                return "View Budget Summary Selected"
+            
+            case "6":
+                return "Generate Report Selected"
+            
+            case "exit":
+                return "Exiting..."
+            
+            case _:
+                return "Invalid Selection"
 
-    elif choice == "4":
-        set_budget()
-        
-    elif choice == "5":
-        view_summary()
-        
-    elif choice == "6":
-        generate_report()
 
-    # exits program (infinite loop)
-    elif choice == "7":
-        print("Saving and exiting program.")
-        break
-
-    # if choice something else its invalid
-    else:
-        print("Invalid option.")
+Main.Menu()
+print(Main.HandleInput())
