@@ -45,6 +45,7 @@ class Transaction:
 
     def display(self):
         # strftime() formats the datetime object into a readable string
+        print(self.date)
         formatted_date = self.date.strftime("%Y-%m-%d %H:%M")
         print(f"  [{formatted_date}] {self.description} | {self.category} | ${self.amount:.2f}")
 

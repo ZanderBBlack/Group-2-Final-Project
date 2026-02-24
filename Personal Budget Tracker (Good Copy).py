@@ -1,3 +1,10 @@
+# To do:
+    # Handle data persistance - save data to text file, load previous data when program starts and basic error handling for file operations
+    # Report (Basic Reporting) - report date, summary, top spending categories, budget status
+    # date and time more gracefully?
+import os
+import datetime
+
 # Menu options displayed to the user as a numbered list in the main loop
 menu = [
     "1. Add Income",
@@ -18,134 +25,230 @@ expense_categories = [
     "Other",
 ]
 
-# Stores income sources and their amounts as key-value pairs { "Job": 3000.00 }
-income_entries = {}
+# Stores Transaction objects for all recorded income entries
+income_entries = []
 
-# Builds a dictionary where each category name is a key mapped to an empty list
-# These lists will hold expense dicts: { "Food": [{"description": "...", "amount": ...}] }
-expense_entries = {cat: [] for cat in expense_categories}
+# Stores Transaction objects for all recorded expense entries
+expense_entries = []
 
-# Empty dictionary to store the monthly budget limit for each expense category { "Food": 500.00 }
+# Stores the monthly budget limit for each expense category { "Food": 500.00 }
 budgets = {}
+
+class Transaction:
+    # Constructor — called when a new Transaction object is created
+    def __init__(self, type, description, amount, category, date):
+        self.type = type                # "income" or "expense"
+        self.description = description
+        self.amount = amount            # stored as a float
+        self.category = category        # expense category or income source name
+        self.date = date                # datetime timestamp of when it was recorded
+
+    def display(self):
+        # strftime() formats the datetime object into a readable string
+        print(self.date)
+        formatted_date = self.date.strftime("%Y-%m-%d %H:%M")
+        print(f"  [{formatted_date}] {self.description} | {self.category} | ${self.amount:.2f}")
+
 
 
 def add_income():
     print("\n----- Add Income -----")
-    income = input("Enter Income Source:")
+    description = input("Enter Income Description: ")
 
-    # Prevent duplicate income sources — each source name must be unique in the dictionary
-    if income in income_entries:
-        print("Income source already exists.")
+    try:
+        # Convert input string to a float so it can be stored and calculated with later
+        amount = float(input("Enter Amount: $"))
+    except ValueError:
+        print("Invalid amount. Must enter a number.")
         return
 
-    # Convert input string to a float so it can be stored and calculated with later
-    amount = float(input("Enter Amount:"))
-    # Add the new income source as a key with its amount as the value
-    income_entries[income] = amount
-    print("Income added successfully.")
+    # Capture the current date and time using the datetime module
+    date = datetime.datetime.now()
+
+    # Create a new Transaction object with type "income" and append it to the income list
+    transaction = Transaction(
+        type="income",
+        description=description,
+        amount=amount,
+        category=description,
+        date=date
+    )
+    income_entries.append(transaction)
+    print(f"Income added successfully. ${amount:.2f} from {description}.")
+
 
 
 def add_expense():
     print("\n----- Add Expense -----")
-    print("Select Cateogry:")
+    print("Select Category:")
 
     # enumerate() gives both the index and value — starting at 1 for user-friendly numbering
     for i, category in enumerate(expense_categories, 1):
         print(f"{i}. {category}")
 
-    choice = input("Enter category (1-5): ")
-
     try:
+        choice = input("Enter Category (1-5): ")
         # Subtract 1 to convert the user's 1-based choice to a 0-based list index
         idx = int(choice) - 1
 
         # Check that the index falls within the valid range of the categories list
         if 0 <= idx < len(expense_categories):
             category_name = expense_categories[idx]
-            descript = input("Enter expense description:")
+            description = input("Enter Expense Description: ")
 
             # Nested try/except handles invalid amount input separately from invalid category input
             try:
-                amount = float(input("Enter Amount:"))
+                amount = float(input("Enter Amount: $"))
             except ValueError:
-                print("Invalid amount. Must enter number")
+                print("Invalid amount. Must enter a number.")
                 return
 
-            # append() adds a new expense dict to the end of the existing list for that category
-            expense_entries[category_name].append({
-                "description": descript,
-                "amount": amount
-            })
+            # Capture the current date and time using the datetime module
+            date = datetime.datetime.now()
+
+            # Create a new Transaction object with type "expense" and append it to the expense list
+            transaction = Transaction(
+                type="expense",
+                description=description,
+                amount=amount,
+                category=category_name,
+                date=date
+            )
+            expense_entries.append(transaction)
+
             # :.2f formats the float to always show exactly 2 decimal places (e.g. 5.00)
             print(f"Expense added successfully. ${amount:.2f} to {category_name}.")
+
+            # Check if this expense has pushed spending close to or over the budget limit
+            check_budget_warning(category_name)
         else:
-            print("Invalid range")
+            print("Invalid range.")
+            return
 
     # Catches non-numeric input when the user enters a category choice that can't be converted to int
     except ValueError:
         print("Invalid input. Please enter numbers only.")
 
 
+
 def view_transactions():
-    print("\n--------View All Transactions---------")  # Title
+    print("\n-------- View All Transactions ---------")
 
     # Show Income
     print("\nIncome:")
-    # An empty dictionary evaluates to False — so "not income_entries" is True when nothing is recorded
+    # An empty list evaluates to False — so "not income_entries" is True when nothing is recorded
     if not income_entries:
         print("  No income recorded.")
-    # .items() returns each key-value pair as (source, amount) so both can be printed together
     else:
-        for source, amount in income_entries.items():
-            print(f"  {source}: ${amount:.2f}")
+        # Call each Transaction object's display() method to print its formatted details
+        for transaction in income_entries:
+            transaction.display()
 
     # Show Expenses
     print("\nExpenses:")
-    # Flag to track whether any category had expenses — used to show a message if none were found
-    has_expenses = False
-    # Loop through every category and its list of expenses
-    for category, expenses in expense_entries.items():
-        # Only print the category header if it actually has at least one expense entry
-        if expenses:
-            has_expenses = True
-            print(f"\n  {category}:")
-            # Loop through each expense dict in the category and print its description and amount
-            for expense in expenses:
-                print(f"    - {expense['description']}: ${expense['amount']:.2f}")
-    # Checked after the loop — if has_expenses was never set to True, no expenses exist at all
-    if not has_expenses:
+    if not expense_entries:
         print("  No expenses recorded.")
+    else:
+        # Call each Transaction object's display() method to print its formatted details
+        for transaction in expense_entries:
+            transaction.display()
+
 
 
 def set_budget():
-    print("------ Set Monthly Budgets ------")
-    print("Select Cateogry:")  # Prompt user to choose an expense category
+    print("\n------ Set Monthly Budget ------")
+    print("Select Category:")
 
     # enumerate() starts at 1 so the displayed numbers match what the user is expected to enter
     for i, category in enumerate(expense_categories, 1):
         print(f"{i}. {category}")
-    choice = input("Enter category (1-5): ")  # User input stored as a variable
 
     try:
+        choice = input("Enter Category (1-5): ")
         # Subtract 1 to convert the user's 1-based choice to a 0-based list index
         idx = int(choice) - 1
+
         # Verify the index is within the valid range before accessing the list
         if 0 <= idx < len(expense_categories):
             category_name = expense_categories[idx]
-            amount = float(input(f"Enter monthly budget for {category_name}: "))
-            # Store the budget — if a budget already exists for this category it will be overwritten
-            budgets[category_name] = amount
-            print(f"Budget set: ${amount:.2f} for {category_name}")
+
+            try:
+                amount = float(input(f"Enter monthly budget for {category_name}: $"))
+                # Store the budget — if one already exists for this category it will be overwritten
+                budgets[category_name] = amount
+                print(f"Budget set successfully: ${amount:.2f} for {category_name}.")
+            except ValueError:
+                print("Invalid amount. Must enter a number.")
+                return
         else:
-            print("Invalid category number.")
-    # Catches non-numeric input for either the category choice or the budget amount
+            print("Invalid range.")
+
+    # Catches non-numeric input for the category choice
     except ValueError:
         print("Invalid input. Please enter numbers only.")
 
 
-# Placeholder — budget summary display not yet implemented
-def view_summary():
-    1 + 1
+
+def check_budget_warning(category):
+    # If no budget has been set for this category, there is nothing to check
+    if category not in budgets:
+        return
+
+    # Sum all expense amounts in expense_entries that belong to the given category
+    total_spent = sum(transaction.amount for transaction in expense_entries if transaction.category == category)
+    limit = budgets[category]
+    remaining = limit - total_spent
+
+    # Warn the user based on how close they are to the budget limit
+    if remaining <= 0:
+        print(f"  Warning: You are OVER budget for {category}!")
+    elif remaining <= (limit * 0.20):
+        # Within 20% of the limit — print a caution message
+        print(f"  Warning: You are approaching your budget limit for {category}.")
+    else:
+        print(f"  Budget remaining for {category}: ${remaining:.2f}")
+
+
+
+def view_budget_summary():
+    print("\n------ Budget Summary ------")
+
+    # Sum the amount field across all Transaction objects in each list
+    total_income = sum(transaction.amount for transaction in income_entries)
+    total_expenses = sum(transaction.amount for transaction in expense_entries)
+    current_balance = total_income - total_expenses
+
+    # Sum all budget limits that have been set across categories
+    total_budget = sum(budgets.values())
+    # Positive means under budget, negative means over budget
+    overunder_budget = total_budget - total_expenses
+
+    print(f"\nTotal Income:   ${total_income:.2f}")
+
+    print("\nExpenses by Category:")
+    # If no budgets have been set, there is nothing to display
+    if not budgets:
+        print("  No budgets set.")
+        return
+
+    for category, limit in budgets.items():
+        # Calculate how much has been spent in this category by filtering expense_entries
+        total_spent = sum(transaction.amount for transaction in expense_entries if transaction.category == category)
+        remaining = limit - total_spent
+        # Calculate the percentage of the budget used — multiply by 100 to convert to a whole number
+        percentage = (total_spent / limit) * 100
+        print(f"  {category}: ${total_spent:.2f} / ${limit:.2f} ({percentage:.1f}% used)")
+
+    print(f"\nTotal Expenses: ${total_expenses:.2f}")
+    print(f"Current Balance: ${current_balance:.2f}")
+    print(f"Total Budget:   ${total_budget:.2f}")
+
+    # Use abs() to remove the negative sign and display the value cleanly
+    if overunder_budget < 0:
+        print(f"Over Budget:    ${abs(overunder_budget):.2f}")
+    else:
+        print(f"Under Budget:   ${abs(overunder_budget):.2f}")
+
 
 
 # Placeholder — report generation not yet implemented
@@ -160,7 +263,7 @@ actions = {
     "2": add_expense,
     "3": view_transactions,
     "4": set_budget,
-    "5": view_summary,
+    "5": view_budget_summary,
     "6": generate_report
 }
 
@@ -168,6 +271,7 @@ actions = {
 while True:
     try:
         print("\n--------- Personal Budget Tracker ----------")
+        print ("--- Calculate your budget, Track your expenses ---")
         # "\n".join() combines the menu list into a single string with each option on its own line
         print("\n".join(menu))
 
@@ -181,6 +285,7 @@ while True:
         # Look up the choice in the actions dictionary and call the matching function if it exists
         if choice in actions:
             actions[choice]()
+            
         else:
             print("Invalid option.")
 
