@@ -45,7 +45,6 @@ class Transaction:
 
     def display(self):
         # strftime() formats the datetime object into a readable string
-        print(self.date)
         formatted_date = self.date.strftime("%Y-%m-%d %H:%M")
         print(f"  [{formatted_date}] {self.description} | {self.category} | ${self.amount:.2f}")
 
@@ -231,14 +230,19 @@ def view_budget_summary():
         print("  No budgets set.")
         return
 
+    print(f"\n  {'Category':<16} {'Spent':>10} {'Budget':>10} {'Remaining':>10} {'Used':>8}")
+    print(f"  {'-'*16} {'-'*10} {'-'*10} {'-'*10} {'-'*8}")
+    
     for category, limit in budgets.items():
         # Calculate how much has been spent in this category by filtering expense_entries
         total_spent = sum(transaction.amount for transaction in expense_entries if transaction.category == category)
         remaining = limit - total_spent
         # Calculate the percentage of the budget used — multiply by 100 to convert to a whole number
         percentage = (total_spent / limit) * 100
-        print(f"  {category}: ${total_spent:.2f} / ${limit:.2f} ({percentage:.1f}% used)")
+        
+        print(f"  {category:<15} ${total_spent:>9.2f} ${limit:>9.2f} ${remaining:>9.2f} {percentage:>7.1f}%")
 
+    print(f"  {'-'*16} {'-'*10} {'-'*10} {'-'*10} {'-'*8}")
     print(f"\nTotal Expenses: ${total_expenses:.2f}")
     print(f"Current Balance: ${current_balance:.2f}")
     print(f"Total Budget:   ${total_budget:.2f}")
@@ -253,7 +257,61 @@ def view_budget_summary():
 
 # Placeholder — report generation not yet implemented
 def generate_report():
-    1 + 1
+    print("\n------ Financial Report ------")
+    date = datetime.date.today()
+    formatted_date = date.strftime("%B %d, %Y")
+    print(f"Report Date: {formatted_date}")
+    
+    total_income = sum(transaction.amount for transaction in income_entries)
+    total_expenses = sum(transaction.amount for transaction in expense_entries)
+    net_income = total_income - total_expenses
+    saving_rate = (net_income / total_income) * 100 if total_income > 0 else 0
+    
+    print(f"\n  {'--- Summary ---'}")
+    print(f"  {'-'*40}")
+    print(f"  {'Total Income:':<20} ${total_income:>10.2f}")
+    print(f"  {'Total Expenses:':<20} ${total_expenses:>10.2f}")
+    print(f"  {'Net Income:':<20} ${net_income:>10.2f}")
+    print(f"  {'Savings Rate:':<20} {saving_rate:>10.1f}%")
+    print(f"  {'-'*40}")
+    
+    if net_income < 0:
+        print("Warning: Expenses exeed income.")
+        
+    print(f"\n  --- Income Sources ---")
+    if not income_entries:
+        print("  No income recorded.")
+    else:
+        print(f"\n  {'Source':<20} {'Date':<18} {'Amount':>10}")
+        print(f"  {'-'*20} {'-'*18} {'-'*10}")
+        for transaction in income_entries:
+            formatted_date = transaction.date.strftime("%Y-%m-%d %H:%M")
+            print(f"  {transaction.description:<20} {formatted_date:<18} ${transaction.amount:>9.2f}")
+        print(f"  {'-'*20} {'-'*18} {'-'*10}")
+    
+    print(f"\n  --- Budget Status ---")
+    if not budgets:
+        print("  No budgets set.")
+    else:
+        over_count = 0
+        print(f"\n  {'Category':<20} {'Spent':>10} {'Limit':>10} {'Status':>10}")
+        print(f"  {'-'*20} {'-'*10} {'-'*10} {'-'*10}")
+        for category, limit in budgets.items():
+            spent = sum(t.amount for t in expense_entries if t.category == category)
+            if spent > limit:
+                over_count += 1
+                status = "OVER"
+            elif spent >= limit * 0.80:
+                status = "CLOSE"
+            else:
+                status = "OK"
+            print(f"  {category:<20} ${spent:>9.2f} ${limit:>9.2f} {status:>10}")
+        print(f"  {'-'*20} {'-'*10} {'-'*10} {'-'*10}")
+
+        if over_count == 0:
+            print("\n  All categories within budget.")
+        else:
+            print(f"\n  {over_count} category/categories over budget.")
 
 
 # Maps menu choices (as strings) to their corresponding functions
