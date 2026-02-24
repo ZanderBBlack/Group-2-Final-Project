@@ -1,9 +1,61 @@
-# To do:
-    # Handle data persistance - save data to text file, load previous data when program starts and basic error handling for file operations
-    # Report (Basic Reporting) - report date, summary, top spending categories, budget status
-    # date and time more gracefully?
 import os
 import datetime
+
+def load_data():
+    if not os.path.exists("budget_data.txt"):
+        print("No saved data found. Starting fresh.")
+        return
+
+    try:
+        with open("budget_data.txt", "r") as file:
+            for line in file:
+                line = line.strip()
+                if not line:
+                    continue
+                fields = line.split("|")
+                entry_type = fields[0]
+
+                if entry_type == "income" or entry_type == "expense":
+                    transaction = Transaction(
+                        type=fields[0],
+                        description=fields[1],
+                        amount=float(fields[2]),
+                        category=fields[3],
+                        date=datetime.datetime.strptime(fields[4], "%Y-%m-%d %H:%M:%S")
+                    )
+                    if entry_type == "income":
+                        income_entries.append(transaction)
+                    else:
+                        expense_entries.append(transaction)
+
+                elif entry_type == "budget":
+                    budgets[fields[1]] = float(fields[2])
+
+        print("Data loaded successfully.")
+
+    except FileNotFoundError:
+        print("Save file missing. Starting fresh.")
+    except Exception:
+        print("Error loading data.")
+
+
+
+def save_data():
+    try:
+        with open("budget_data.txt", "w") as file:
+            for transaction in income_entries:
+                file.write(f"{transaction.type}|{transaction.description}|{transaction.amount}|{transaction.category}|{transaction.date.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            for transaction in expense_entries:
+                file.write(f"{transaction.type}|{transaction.description}|{transaction.amount}|{transaction.category}|{transaction.date.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            for category, amount in budgets.items():
+                file.write(f"budget|{category}|{amount}\n")
+
+        print("Data saved successfully.")
+
+    except Exception:
+        print("Error saving data.")
+
+
 
 # Menu options displayed to the user as a numbered list in the main loop
 menu = [
@@ -266,6 +318,8 @@ actions = {
     "6": generate_report
 }
 
+load_data()
+
 # Main loop — keeps running until the user chooses to exit
 while True:
     try:
@@ -279,6 +333,7 @@ while True:
         # Option 7 exits the loop using break — skips the rest of the loop body and ends the program
         if choice == "7":
             print("Saving and exiting program.")
+            save_data()
             break
 
         # Look up the choice in the actions dictionary and call the matching function if it exists
