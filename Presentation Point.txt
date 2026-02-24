@@ -1,0 +1,4 @@
+Ethan - data persistance and README.md
+Tomi - add income, add expense view transaction (TRANSACTION CLASS)
+Zander - set budget, check check_budget_warning, budget summary and report
+liam - menu 
