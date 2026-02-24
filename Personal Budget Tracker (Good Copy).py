@@ -2,6 +2,7 @@ import os
 import datetime
 
 def load_data():
+    # Check if the save file exists before attempting to open it — avoids a crash on first run
     if not os.path.exists("budget_data.txt"):
         print("No saved data found. Starting fresh.")
         return
@@ -9,18 +10,26 @@ def load_data():
     try:
         with open("budget_data.txt", "r") as file:
             for line in file:
+                # Remove the trailing newline character from each line before processing
                 line = line.strip()
+
+                # Skip any blank lines that may exist in the file
                 if not line:
                     continue
+
+                # Split the line into individual fields using | as the delimiter
                 fields = line.split("|")
                 entry_type = fields[0]
 
                 if entry_type == "income" or entry_type == "expense":
+                    # Reconstruct a Transaction object from the saved fields
                     transaction = Transaction(
                         type=fields[0],
                         description=fields[1],
+                        # Convert the stored string back to a float for calculations
                         amount=float(fields[2]),
                         category=fields[3],
+                        # strptime() parses the date string back into a datetime object
                         date=datetime.datetime.strptime(fields[4], "%Y-%m-%d %H:%M:%S")
                     )
                     if entry_type == "income":
@@ -29,12 +38,14 @@ def load_data():
                         expense_entries.append(transaction)
 
                 elif entry_type == "budget":
+                    # Rebuild the budgets dictionary — { category: amount }
                     budgets[fields[1]] = float(fields[2])
 
         print("Data loaded successfully.")
 
     except FileNotFoundError:
         print("Save file missing. Starting fresh.")
+    # Catch any other unexpected errors such as corrupted or malformed lines
     except Exception:
         print("Error loading data.")
 
@@ -42,16 +53,20 @@ def load_data():
 
 def save_data():
     try:
+        # Open in write mode — creates the file if it doesn't exist, overwrites it if it does
         with open("budget_data.txt", "w") as file:
             for transaction in income_entries:
+                # Write each field separated by | so load_data() can split them back apart
                 file.write(f"{transaction.type}|{transaction.description}|{transaction.amount}|{transaction.category}|{transaction.date.strftime('%Y-%m-%d %H:%M:%S')}\n")
             for transaction in expense_entries:
                 file.write(f"{transaction.type}|{transaction.description}|{transaction.amount}|{transaction.category}|{transaction.date.strftime('%Y-%m-%d %H:%M:%S')}\n")
             for category, amount in budgets.items():
+                # Prefix budget lines with "budget" so load_data() can identify the entry type
                 file.write(f"budget|{category}|{amount}\n")
 
         print("Data saved successfully.")
 
+    # Catch any errors during writing — e.g. permission denied or disk full
     except Exception:
         print("Error saving data.")
 
