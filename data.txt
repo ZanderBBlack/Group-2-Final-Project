@@ -1,9 +1,0 @@
-transaction|income|job|2000000.0|job|2026-02-24 13:53:43
-transaction|income|poopoo|1.0|poopoo|2026-02-24 14:13:10
-transaction|income|Ethans OF|40000000.0|Ethans OF|2026-02-24 14:20:11
-transaction|income|poo|1000.0|poo|2026-02-24 14:40:00
-transaction|expense|2000|2000.0|Food|2026-02-24 13:54:05
-transaction|expense|poopee|1.0|Other|2026-02-24 14:13:50
-transaction|expense|OF expenses|2500000.0|Other|2026-02-24 14:20:44
-transaction|expense|poo|1234.0|Food|2026-02-24 14:40:06
-budget|Other|40000000.0
