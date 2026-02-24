@@ -133,24 +133,56 @@ def add_expense():
 def view_transactions():
     print("\n-------- View All Transactions ---------")
 
-    # Show Income
-    print("\nIncome:")
+    # Get todays date and format it for display at the top of the view
+    date = datetime.date.today()
+    formatted_date = date.strftime("%B %d, %Y")
+    print(f"Report Date: {formatted_date}")
+
+    # Income Section
+    # Calculate total income by summing the amount field across all income Transaction objects
+    total_income = sum(transaction.amount for transaction in income_entries)
+
+    print(f"\n  --- Income Sources ---")
+
     # An empty list evaluates to False — so "not income_entries" is True when nothing is recorded
     if not income_entries:
         print("  No income recorded.")
     else:
+        # Print column headers with fixed-width formatting to align the table
+        # '<' = left-align, '>' = right-align, the number sets the column width
+        print(f"\n  {'Source':<20} {'Date':<18} {'Amount':>10}")
+        print(f"  {'-'*20} {'-'*18} {'-'*10}")
+
         # Call each Transaction object's display() method to print its formatted details
         for transaction in income_entries:
             transaction.display()
 
-    # Show Expenses
-    print("\nExpenses:")
+        # Divider line and total row to close out the income table
+        print(f"  {'-'*20} {'-'*18} {'-'*10}")
+        print(f"  {'Total Income:':<20} {'':18} ${total_income:>9.2f}")
+
+    # Expense Section
+    # Calculate total expenses by summing the amount field across all expense Transaction objects
+    total_expenses = sum(transaction.amount for transaction in expense_entries)
+
+    print(f"\n  --- Expenses ---")
+
     if not expense_entries:
         print("  No expenses recorded.")
     else:
-        # Call each Transaction object's display() method to print its formatted details
+        # Print column headers — Category is added here since expenses are grouped by category
+        print(f"\n  {'Description':<20} {'Date':<18} {'Category':<16} {'Amount':>10}")
+        print(f"  {'-'*20} {'-'*18} {'-'*16} {'-'*10}")
+
+        # Loop through each expense Transaction and print a formatted row
         for transaction in expense_entries:
-            transaction.display()
+            # strftime() formats the datetime object into a human-readable string
+            formatted_date = transaction.date.strftime("%Y-%m-%d %H:%M")
+            print(f"  {transaction.description:<20} {formatted_date:<18} {transaction.category:<16} ${transaction.amount:>9.2f}")
+
+        # Divider line and total row to close out the expense table
+        print(f"  {'-'*20} {'-'*18} {'-'*16} {'-'*10}")
+        print(f"  {'Total Expenses:':<20} {'':18} {'':16} ${total_expenses:>9.2f}")
 
 
 
@@ -255,16 +287,20 @@ def view_budget_summary():
 
 
 
-# Placeholder — report generation not yet implemented
 def generate_report():
     print("\n------ Financial Report ------")
+
+    # Get todays date and format it for display at the top of the report
     date = datetime.date.today()
     formatted_date = date.strftime("%B %d, %Y")
     print(f"Report Date: {formatted_date}")
     
+    # Calculate summary totals by summing amounts across all income and expense Transaction objects
     total_income = sum(transaction.amount for transaction in income_entries)
     total_expenses = sum(transaction.amount for transaction in expense_entries)
+    # Net income = income minus expenses — negative value means spending exceeded earnings
     net_income = total_income - total_expenses
+    # Savings rate as a percentage — guarded against division by zero if no income exists
     saving_rate = (net_income / total_income) * 100 if total_income > 0 else 0
     
     print(f"\n  {'--- Summary ---'}")
@@ -275,18 +311,24 @@ def generate_report():
     print(f"  {'Savings Rate:':<20} {saving_rate:>10.1f}%")
     print(f"  {'-'*40}")
     
+    # Alert the user if they've spent more than they've earned this period
     if net_income < 0:
-        print("Warning: Expenses exeed income.")
+        print("Warning: Expenses exceed income.")
         
     print(f"\n  --- Income Sources ---")
     if not income_entries:
         print("  No income recorded.")
     else:
+        # Column headers — widths match those used in each row below for alignment
         print(f"\n  {'Source':<20} {'Date':<18} {'Amount':>10}")
         print(f"  {'-'*20} {'-'*18} {'-'*10}")
+
         for transaction in income_entries:
+            # strftime() formats the datetime object into a human-readable string
             formatted_date = transaction.date.strftime("%Y-%m-%d %H:%M")
             print(f"  {transaction.description:<20} {formatted_date:<18} ${transaction.amount:>9.2f}")
+
+        # Closing divider and total row beneath the income table
         print(f"  {'-'*20} {'-'*18} {'-'*10}")
     
     print(f"\n  --- Budget Status ---")
@@ -294,24 +336,36 @@ def generate_report():
         print("  No budgets set.")
     else:
         over_count = 0
+
+        # Column headers for the budget status table
         print(f"\n  {'Category':<20} {'Spent':>10} {'Limit':>10} {'Status':>10}")
         print(f"  {'-'*20} {'-'*10} {'-'*10} {'-'*10}")
+
         for category, limit in budgets.items():
+            # Sum all expenses that belong to this category to get total spending
             spent = sum(t.amount for t in expense_entries if t.category == category)
+
+            # Assign a status label based on how close spending is to the budget limit
             if spent > limit:
-                over_count += 1
+                over_count += 1     # Track how many categories exceeded their budget
                 status = "OVER"
             elif spent >= limit * 0.80:
+                # At or above 80% of the limit — flag as CLOSE to warn the user
                 status = "CLOSE"
             else:
                 status = "OK"
+
             print(f"  {category:<20} ${spent:>9.2f} ${limit:>9.2f} {status:>10}")
+
+        # Closing divider beneath the budget table
         print(f"  {'-'*20} {'-'*10} {'-'*10} {'-'*10}")
 
+        # Summary line — tells the user at a glance how many categories need attention
         if over_count == 0:
             print("\n  All categories within budget.")
         else:
             print(f"\n  {over_count} category/categories over budget.")
+
 
 
 # Maps menu choices (as strings) to their corresponding functions
