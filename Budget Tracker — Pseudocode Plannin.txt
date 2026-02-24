@@ -1,0 +1,281 @@
+Budget Tracker — Pseudocode Planning
+
+
+Data Setup
+
+DEFINE expense_categories = ["Food", "Transportation", "Entertainment", "Bills", "Other"]
+
+DEFINE income_entries = empty list          # will hold Transaction objects
+DEFINE expense_entries = empty list         # will hold Transaction objects
+DEFINE budgets = empty dictionary           # { "Food": 500.00, ... }
+
+
+
+
+Class: Transaction
+
+CLASS Transaction:
+
+    CONSTRUCTOR (type, description, amount, category, date):
+        SET self.type = type                # "income" or "expense"
+        SET self.description = description
+        SET self.amount = amount            # float
+        SET self.category = category        # expense category or income source
+        SET self.date = date                # datetime timestamp
+
+    METHOD display():
+        PRINT formatted string showing date, description, category, and amount
+
+
+
+
+Function: load_data()
+Loads saved transaction and budget data from file on program startup
+
+FUNCTION load_data():
+    USE os module to CHECK if save file exists
+        IF file does not exist:
+            PRINT "No saved data found. Starting fresh."
+            RETURN
+
+    TRY:
+        OPEN file for reading
+        FOR each line in file:
+            PARSE the line into fields (type, description, amount, category, date)
+            CREATE a new Transaction object from those fields
+            IF type is "income":
+                APPEND to income_entries
+            ELSE IF type is "expense":
+                APPEND to expense_entries
+            ELSE IF type is "budget":
+                ADD to budgets dictionary as { category: amount }
+        CLOSE file
+        PRINT "Data loaded successfully."
+    EXCEPT FileNotFoundError:
+        PRINT "Save file missing. Starting fresh."
+    EXCEPT any other error:
+        PRINT "Error loading data."
+
+
+
+
+Function: save_data()
+Saves all current transactions and budgets to a text file
+
+FUNCTION save_data():
+    TRY:
+        OPEN file for writing
+        FOR each transaction in income_entries:
+            WRITE transaction fields as a formatted line
+        FOR each transaction in expense_entries:
+            WRITE transaction fields as a formatted line
+        FOR each category, amount in budgets:
+            WRITE budget fields as a formatted line
+        CLOSE file
+        PRINT "Data saved successfully."
+    EXCEPT any error:
+        PRINT "Error saving data."
+
+
+
+
+Function: add_income()
+Prompts the user for income details, creates a Transaction object, adds it to income_entries
+
+FUNCTION add_income():
+    PRINT "Add Income"
+    PROMPT user for description
+    TRY:
+        PROMPT user for amount
+        CONVERT amount to float
+    EXCEPT ValueError:
+        PRINT "Invalid amount."
+        RETURN
+
+    SET date = current datetime (using datetime module)
+    CREATE Transaction object (type="income", description, amount, category=description, date)
+    APPEND transaction to income_entries
+    PRINT "Income added successfully."
+
+
+
+
+Function: add_expense()
+Prompts the user to choose a category, enter details, creates a Transaction object, adds it to expense_entries
+
+FUNCTION add_expense():
+    PRINT "Add Expense"
+    DISPLAY numbered list of expense_categories
+    TRY:
+        PROMPT user to select a category number
+        CONVERT choice to integer
+        LOOK UP category name using index (subtract 1 for 0-based index)
+        IF index out of range:
+            PRINT "Invalid category."
+            RETURN
+    EXCEPT ValueError:
+        PRINT "Invalid input."
+        RETURN
+
+    PROMPT user for description
+    TRY:
+        PROMPT user for amount
+        CONVERT amount to float
+    EXCEPT ValueError:
+        PRINT "Invalid amount."
+        RETURN
+
+    CHECK if spending is approaching budget limit for this category (call check_budget_warning())
+
+    SET date = current datetime
+    CREATE Transaction object (type="expense", description, amount, category, date)
+    APPEND transaction to expense_entries
+    PRINT "Expense added successfully."
+
+
+
+
+Function: view_transactions()
+Displays all recorded income and expense transactions using each object's display() method
+
+FUNCTION view_transactions():
+    PRINT "View All Transactions"
+
+    PRINT "--- Income ---"
+    IF income_entries is empty:
+        PRINT "No income recorded."
+    ELSE:
+        FOR each transaction in income_entries:
+            CALL transaction.display()
+
+    PRINT "--- Expenses ---"
+    IF expense_entries is empty:
+        PRINT "No expenses recorded."
+    ELSE:
+        FOR each transaction in expense_entries:
+            CALL transaction.display()
+
+
+
+
+Function: set_budget()
+Lets the user set a monthly spending limit for a chosen category
+
+FUNCTION set_budget():
+    PRINT "Set Monthly Budget"
+    DISPLAY numbered list of expense_categories
+    TRY:
+        PROMPT user to select a category number
+        CONVERT to integer and look up category name
+        IF index out of range:
+            PRINT "Invalid category."
+            RETURN
+    EXCEPT ValueError:
+        PRINT "Invalid input."
+        RETURN
+
+    TRY:
+        PROMPT user for budget amount
+        CONVERT to float
+    EXCEPT ValueError:
+        PRINT "Invalid amount."
+        RETURN
+
+    STORE in budgets dictionary as { category_name: amount }
+    PRINT "Budget set successfully."
+
+
+
+
+Function: check_budget_warning()
+Called after adding an expense — warns the user if they are near or over their budget
+
+FUNCTION check_budget_warning(category):
+    IF category NOT in budgets:
+        RETURN                              # no budget set, nothing to check
+
+    CALCULATE total_spent = sum of amounts in expense_entries where category matches
+    SET limit = budgets[category]
+    SET remaining = limit - total_spent
+
+    IF remaining <= 0:
+        PRINT "Warning: You are OVER budget for [category]!"
+    ELSE IF remaining <= (limit * 0.20):    # within 20% of limit
+        PRINT "Warning: You are approaching your budget limit for [category]."
+    ELSE:
+        RETURN                              # within budget, no warning needed
+
+
+
+
+Function: view_budget_summary()
+Shows each category's budget, total spent, and remaining balance with a warning if over
+
+FUNCTION view_budget_summary():
+    PRINT "Budget Summary"
+
+    IF budgets is empty:
+        PRINT "No budgets set."
+        RETURN
+
+    FOR each category, limit in budgets:
+        CALCULATE total_spent = sum of amounts in expense_entries where category matches
+        CALCULATE remaining = limit - total_spent
+
+        PRINT category, limit, total_spent, remaining
+        IF remaining < 0:
+            PRINT "OVER BUDGET"
+
+
+
+
+
+Function: generate_report()
+Calculates and displays total income, total expenses, balance, and a breakdown by category
+
+FUNCTION generate_report():
+    PRINT "Monthly Report"
+    SET current date using datetime module
+
+    CALCULATE total_income = sum of all amounts in income_entries
+    CALCULATE total_expenses = sum of all amounts in expense_entries
+    CALCULATE balance = total_income - total_expenses
+
+    PRINT total income
+    PRINT total expenses
+    PRINT current balance
+    IF balance < 0:
+        PRINT "Warning: Expenses exceed income."
+
+    PRINT "--- Expenses by Category ---"
+    FOR each category in expense_categories:
+        CALCULATE category_total = sum of amounts in expense_entries where category matches
+        IF category_total > 0:
+            PRINT category name and total
+
+
+
+
+
+Main Menu Loop
+
+CALL load_data()                            # load saved data before showing the menu
+
+LOOP forever:
+    PRINT main menu options (1–7)
+    PROMPT user for choice
+
+    IF choice == "1": CALL add_income()
+    IF choice == "2": CALL add_expense()
+    IF choice == "3": CALL view_transactions()
+    IF choice == "4": CALL set_budget()
+    IF choice == "5": CALL view_budget_summary()
+    IF choice == "6": CALL generate_report()
+    IF choice == "7":
+        CALL save_data()
+        PRINT "Goodbye."
+        BREAK out of loop
+    ELSE:
+        PRINT "Invalid option. Please enter 1–7."
+
+    PROMPT "Press Enter to continue..."
