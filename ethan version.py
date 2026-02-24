@@ -1,7 +1,8 @@
 # To do:
     # Handle data persistance - save data to text file, load previous data when program starts and basic error handling for file operations
     # Report (Basic Reporting) - report date, summary, top spending categories, budget status
-    # date and time more gracefully?
+    # date and time more gracefully?#
+    #updated
 import os
 import datetime
 
