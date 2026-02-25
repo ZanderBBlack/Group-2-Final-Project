@@ -273,7 +273,7 @@ def set_budget():
             category_name = expense_categories[idx]
 
             try:
-                amount = float(input(f"Enter monthly budget for {category_name}: $"))
+                amount = float(input(f"Enter monthly budget for {category_name}: "))
                 # Store the budget — if one already exists for this category it will be overwritten
                 budgets[category_name] = amount
                 print(f"Budget set successfully: ${amount:.2f} for {category_name}.")

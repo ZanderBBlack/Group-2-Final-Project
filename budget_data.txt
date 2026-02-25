@@ -1,5 +1,1 @@
-income|Job|100.0|Job|2026-02-24 15:20:43
-expense|Yummy|50.0|Food|2026-02-24 15:21:27
-expense|Train|20.0|Transportation|2026-02-24 15:21:37
-budget|Food|100.0
-budget|Transportation|200.0
+income|poo|1000.0|poo|2026-02-24 15:29:02
