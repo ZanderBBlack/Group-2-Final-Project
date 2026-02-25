@@ -1,6 +1,16 @@
 import os
 import datetime
 
+# Display instructions before the first run
+try:
+    with open("README.md", "r") as f:
+        print("\n" + "="*50)
+        print(f.read().strip())
+        print("="*50 + "\n")
+    input("Press Enter to start the Personal Budget Tracker...")
+except FileNotFoundError:
+    pass
+
 # Menu options displayed to the user as a numbered list in the main loop
 menu = [
     "1. Add Income",
