@@ -471,8 +471,8 @@ load_data()
 # Main loop — keeps running until the user chooses to exit
 while True:
     try:
-        print("\n" + "=" * 50)
-        print("         Personal Budget Tracker")
+        print("=" * 50)
+        print("           Personal Budget Tracker")
         print("  Calculate your budget, Track your expenses")
         print("=" * 50)
         # "\n".join() combines the menu list into a single string with each option on its own line

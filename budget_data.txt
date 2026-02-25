@@ -1,1 +1,12 @@
-
+income|Part-time Job|500.0|Part-time Job|2026-02-24 19:06:51
+income|Babysitting|300.0|Babysitting|2026-02-24 19:07:48
+expense|Resturant|100.0|Food|2026-02-24 19:08:39
+expense|Groceries|20.0|Food|2026-02-24 19:08:50
+expense|Car|200.0|Transportation|2026-02-24 19:08:59
+expense|Gas|60.0|Bills|2026-02-24 19:09:09
+expense|Electricity|130.0|Bills|2026-02-24 19:09:22
+budget|Food|200.0
+budget|Transportation|50.0
+budget|Entertainment|110.0
+budget|Bills|300.0
+budget|Other|200.0
