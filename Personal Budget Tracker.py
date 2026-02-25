@@ -52,7 +52,7 @@ def load_data():
     # Check if the save file exists before attempting to open it — avoids a crash on first run
     if not os.path.exists("budget_data.txt"):
         print("No saved data found. Starting fresh.")
-        return
+        return False
 
     try:
         with open("budget_data.txt", "r") as file:
@@ -89,12 +89,16 @@ def load_data():
                     budgets[fields[1]] = float(fields[2])
 
         print("Data loaded successfully.")
+        # Return True to indicate the file was found and loaded without errors
+        return True
 
     except FileNotFoundError:
         print("Save file missing. Starting fresh.")
+        return False
     # Catch any other unexpected errors such as corrupted or malformed lines
     except Exception:
         print("Error loading data.")
+        return False
 
 
 
@@ -112,10 +116,13 @@ def save_data():
                 file.write(f"budget|{category}|{amount}\n")
 
         print("Data saved successfully.")
+        # Return True to indicate all data was written to the file without errors
+        return True
 
     # Catch any errors during writing — e.g. permission denied or disk full
     except Exception:
         print("Error saving data.")
+        return False
 
 
 
@@ -128,7 +135,8 @@ def add_income():
         amount = float(input("Enter Amount: $"))
     except ValueError:
         print("Invalid amount. Must enter a number.")
-        return
+        # Return False to indicate the income entry was not successfully added
+        return False
 
     # Capture the current date and time using the datetime module
     date = datetime.datetime.now()
@@ -143,6 +151,8 @@ def add_income():
     )
     income_entries.append(transaction)
     print(f"Income added successfully. ${amount:.2f} from {description}.")
+    # Return True to indicate the income entry was successfully added
+    return True
 
 
 
@@ -169,7 +179,8 @@ def add_expense():
                 amount = float(input("Enter Amount: $"))
             except ValueError:
                 print("Invalid amount. Must enter a number.")
-                return
+                # Return False to indicate the expense entry was not successfully added
+                return False
 
             # Capture the current date and time using the datetime module
             date = datetime.datetime.now()
@@ -188,14 +199,21 @@ def add_expense():
             print(f"Expense added successfully. ${amount:.2f} to {category_name}.")
 
             # Check if this expense has pushed spending close to or over the budget limit
-            check_budget_warning(category_name)
+            # check_budget_warning() returns a message string or None — only print if a message exists
+            message = check_budget_warning(category_name)
+            if message:
+                print(message)
+
+            # Return True to indicate the expense entry was successfully added
+            return True
         else:
             print("Invalid range.")
-            return
+            return False
 
     # Catches non-numeric input when the user enters a category choice that can't be converted to int
     except ValueError:
         print("Invalid input. Please enter numbers only.")
+        return False
 
 
 
@@ -209,7 +227,6 @@ def view_transactions():
 
     # Calculate total income by summing the amount field across all income Transaction objects
     total_income = sum(transaction.amount for transaction in income_entries)
-
 
     print(f"\n  --- Income Sources ---")
 
@@ -230,7 +247,6 @@ def view_transactions():
         # Divider line and total row to close out the income table
         print(f"  {'-'*20} {'-'*18} {'-'*10}")
         print(f"  {'Total Income:':<20} {'':18} ${total_income:>9.2f}")
-
 
     # Calculate total expenses by summing the amount field across all expense Transaction objects
     total_expenses = sum(transaction.amount for transaction in expense_entries)
@@ -273,7 +289,7 @@ def set_budget():
             category_name = expense_categories[idx]
 
             try:
-                amount = float(input(f"Enter monthly budget for {category_name}: "))
+                amount = float(input(f"Enter monthly budget for {category_name}: $"))
                 # Store the budget — if one already exists for this category it will be overwritten
                 budgets[category_name] = amount
                 print(f"Budget set successfully: ${amount:.2f} for {category_name}.")
@@ -292,21 +308,21 @@ def set_budget():
 def check_budget_warning(category):
     # If no budget has been set for this category, there is nothing to check
     if category not in budgets:
-        return
+        return None
 
     # Sum all expense amounts in expense_entries that belong to the given category
     total_spent = sum(transaction.amount for transaction in expense_entries if transaction.category == category)
     limit = budgets[category]
     remaining = limit - total_spent
 
-    # Warn the user based on how close they are to the budget limit
+    # Return the appropriate warning string based on how close spending is to the budget limit
     if remaining <= 0:
-        print(f"  Warning: You are OVER budget for {category}!")
+        return f"  Warning: You are OVER budget for {category}!"
     elif remaining <= (limit * 0.20):
-        # Within 20% of the limit — print a caution message
-        print(f"  Warning: You are approaching your budget limit for {category}.")
+        # Within 20% of the limit — return a caution message
+        return f"  Warning: You are approaching your budget limit for {category}."
     else:
-        print(f"  Budget remaining for {category}: ${remaining:.2f}")
+        return f"  Budget remaining for {category}: ${remaining:.2f}"
 
 
 
@@ -343,6 +359,7 @@ def view_budget_summary():
         percentage = (total_spent / limit) * 100
         print(f"  {category:<15} ${total_spent:>9.2f} ${limit:>9.2f} ${remaining:>9.2f} {percentage:>7.1f}%")
 
+    # Closing divider beneath the budget table
     print(f"  {'-'*16} {'-'*10} {'-'*10} {'-'*10} {'-'*8}")
     print(f"\nTotal Expenses: ${total_expenses:.2f}")
     print(f"Current Balance: ${current_balance:.2f}")
@@ -372,12 +389,13 @@ def generate_report():
     # Savings rate as a percentage — guarded against division by zero if no income exists
     saving_rate = (net_income / total_income) * 100 if total_income > 0 else 0
 
-    print(f"\n  {'--- Summary ---'}")
+    print(f"\n  --- Summary ---")
     print(f"  {'-'*40}")
     print(f"  {'Total Income:':<20} ${total_income:>10.2f}")
     print(f"  {'Total Expenses:':<20} ${total_expenses:>10.2f}")
     print(f"  {'Net Income:':<20} ${net_income:>10.2f}")
-    print(f"  {'Savings Rate:':<20} %{saving_rate:>10.1f}")
+    # :.1f formats the savings rate to one decimal place
+    print(f"  {'Savings Rate:':<20} {saving_rate:>10.1f}%")
     print(f"  {'-'*40}")
 
     # Alert the user if they've spent more than they've earned this period
